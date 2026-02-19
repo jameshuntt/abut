@@ -1,6 +1,6 @@
 [package]
 name = "abut"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 license = "MIT OR Apache-2.0"
@@ -9,4 +9,14 @@ description = "Structural IPC orchestration and boundary-aware Unix Domain Socke
 authors = ["James Hunt <jameshuntdevelopment@gmail.com>"]
 repository = "https://github.com/jameshuntt/abut"
 
+[features]
+default = []
+
+postcard = ["dep:postcard"]
+cbor = ["dep:serde_cbor"]
+
 [dependencies]
+serde_cbor = { version = "0.11.2", optional = true }
+postcard = { version = "1", default-features = false, features = ["alloc"], optional = true  }
+serde = { version = "1.0.219", features = ["derive"] }
+liaise = "0.1.3"

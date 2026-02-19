@@ -12,3 +12,14 @@
 //!   memory allotments and `classified` contents never intermingle.
 //! * **Deterministic Junctions:** Uses `scope` to ensure that the IPC 
 //!   junction is severed immediately upon task completion.
+//! 
+
+
+pub mod error;
+pub mod frame;
+pub mod traits;
+pub mod types;
+
+pub use error::*;
+pub use traits::*;
+pub use types::*;
