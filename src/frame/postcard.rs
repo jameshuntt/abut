@@ -25,7 +25,10 @@ impl<W: Write> FramedPostcardWriter<W> {
         // or simply pass the buf by value and re-assign it.
         // However, postcard provides a better way for Vecs:
         
-        let serialized = postcard::to_extend(value, std::mem::take(&mut self.buf))
+        let serialized = postcard::to_extend(
+            value,
+            std::mem::take(&mut self.buf)
+        )
             .map_err(AbutError::postcard_encode)?;
         
         // Put the buffer back into our struct so we can reuse the allocation

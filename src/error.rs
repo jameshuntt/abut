@@ -17,36 +17,56 @@
 use std::{fmt, io};
 
 
-use liaise::{Liaise, RegisterErrors};
+// use liaise::{Liaise, RegisterErrors};
+// 
+// #[derive(RegisterErrors, Debug, Copy, Clone)]
+// #[error_prefix = "FILE"] // Sets the reporting prefix
+// pub enum AbutCode {
+//     Io = 1,
+//     BufferTooSmall = 2,
+//     FrameTooLarge = 3,
+//     #[cfg(feature = "postcard")]
+//     PostcardEncode = 10,
+//     #[cfg(feature = "postcard")]
+//     PostcardDecode = 11
+// }
+// 
+// impl Liaise for AbutCode {
+//     fn code_id(self) -> u16 { self as u16 }
+//     fn message(self) -> &'static str {
+//         match self {
+//             Self::Io => "I/O error",
+//             Self::BufferTooSmall => "Buffer too small",
+//             Self::FrameTooLarge => "Frame too large",
+//             #[cfg(feature = "postcard")]
+//             Self::PostcardEncode => "Postcard encode failed",
+//             #[cfg(feature = "postcard")]
+//             Self::PostcardDecode => "Postcard decode failed",
+//         }
+//     }
+// }
+use liaise::{Liaise, LiaiseCodes};
 
-#[derive(RegisterErrors, Debug, Copy, Clone)]
-#[error_prefix = "FILE"] // Sets the reporting prefix
+#[derive(LiaiseCodes, Debug)]
+#[liaise(prefix = "ABUT")] // Replaces #[error_prefix = "FILE"]
 pub enum AbutCode {
-    Io = 1,
-    BufferTooSmall = 2,
-    FrameTooLarge = 3,
-    #[cfg(feature = "postcard")]
-    PostcardEncode = 10,
-    #[cfg(feature = "postcard")]
-    PostcardDecode = 11
-}
+    #[liaise(code = 1, msg = "I/O failure")]
+    Io,
 
-impl Liaise for AbutCode {
-    fn code_id(self) -> u16 { self as u16 }
-    
-    fn message(self) -> &'static str {
-        match self {
-            Self::Io => "I/O error",
-            Self::BufferTooSmall => "Buffer too small",
-            Self::FrameTooLarge => "Frame too large",
-            #[cfg(feature = "postcard")]
-            Self::PostcardEncode => "Postcard encode failed",
-            #[cfg(feature = "postcard")]
-            Self::PostcardDecode => "Postcard decode failed",
-        }
-    }
-}
+    #[liaise(code = 2, msg = "Buffer too small (need {needed} bytes)")]
+    BufferTooSmall { needed: usize },
 
+    #[liaise(code = 3, msg = "Frame too large")]
+    FrameTooLarge,
+
+    #[cfg(feature = "postcard")]
+    #[liaise(code = 10, msg = "Postcard encode failed")]
+    PostcardEncode,
+
+    #[cfg(feature = "postcard")]
+    #[liaise(code = 11, msg = "Postcard decode failed")]
+    PostcardDecode,
+}
 /// Concrete runtime error type for the crate.
 /// Uses `liaise` for stable IDs + formatting; no `thiserror`.
 #[derive(Debug)]
@@ -88,7 +108,7 @@ impl AbutError {
 
     #[inline]
     pub fn buffer_too_small(needed: usize) -> Self {
-        Self::new(AbutCode::BufferTooSmall).ctx(format_args!("need {needed} bytes"))
+        Self::new(AbutCode::BufferTooSmall{needed})
     }
 
     #[inline]

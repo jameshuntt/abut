@@ -13,12 +13,13 @@
 //! * **Deterministic Junctions:** Uses `scope` to ensure that the IPC 
 //!   junction is severed immediately upon task completion.
 //! 
-
+extern crate alloc;
 
 pub mod error;
 pub mod frame;
 pub mod traits;
 pub mod types;
+pub mod ring;
 
 pub use error::*;
 pub use traits::*;
