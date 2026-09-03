@@ -52,12 +52,12 @@ fn a_frame_over_the_maximum_is_refused_and_not_drained_by_default() {
     let mut r = FramedReader::with_max(Cursor::new(bytes), 4);
     let mut v = Vec::new();
     let e = r.recv_into(&mut v).unwrap_err();
-    assert!(matches!(e.code, AbutCode::FrameTooLarge), "{e}");
+    assert!(matches!(e.code, AbutCode::FrameTooLarge { .. }), "{e}");
     assert_eq!(e.to_string(), "[ABUT0003] Frame too large: len 10 exceeds max 4");
     // nothing was consumed past the prefix, so the stream is now misaligned:
     // the payload bytes "0123" read as a length, and that is also too large
     let e2 = r.recv_into(&mut v).unwrap_err();
-    assert!(matches!(e2.code, AbutCode::FrameTooLarge), "{e2}");
+    assert!(matches!(e2.code, AbutCode::FrameTooLarge { .. }), "{e2}");
 }
 
 #[test]
@@ -66,7 +66,7 @@ fn an_oversize_frame_is_drained_when_the_bound_allows_it() {
     let cfg = ReaderConfig { max_frame_len: 4, drain_oversize_up_to: 64, ..Default::default() };
     let mut r = FramedReader::with_config(Cursor::new(bytes), cfg);
     let mut v = Vec::new();
-    assert!(matches!(r.recv_into(&mut v).unwrap_err().code, AbutCode::FrameTooLarge));
+    assert!(matches!(r.recv_into(&mut v).unwrap_err().code, AbutCode::FrameTooLarge { .. }));
     r.recv_into(&mut v).unwrap();
     assert_eq!(v, b"ok", "the stream stayed aligned");
 }
@@ -77,7 +77,7 @@ fn an_oversize_frame_beyond_the_drain_bound_is_not_drained() {
     let cfg = ReaderConfig { max_frame_len: 4, drain_oversize_up_to: 8, ..Default::default() };
     let mut r = FramedReader::with_config(Cursor::new(bytes), cfg);
     let mut v = Vec::new();
-    assert!(matches!(r.recv_into(&mut v).unwrap_err().code, AbutCode::FrameTooLarge));
+    assert!(matches!(r.recv_into(&mut v).unwrap_err().code, AbutCode::FrameTooLarge { .. }));
     assert!(r.recv_into(&mut v).is_err(), "misaligned, as configured");
 }
 
@@ -151,7 +151,8 @@ fn the_traits_let_frames_flow_through_any_sink_and_source() {
 fn error_values_carry_code_context_and_source() {
     let e = AbutError::frame_too_large(10, 4);
     assert!(e.source().is_none());
-    assert_eq!(e.ctx.as_deref(), Some("len 10 exceeds max 4"));
+    assert!(matches!(e.code, AbutCode::FrameTooLarge { len: 10, max: 4 }));
+    assert_eq!(e.to_string(), "[ABUT0003] Frame too large: len 10 exceeds max 4");
 
     let io = AbutError::from(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "gone"));
     assert!(matches!(io.code, AbutCode::Io));

@@ -71,7 +71,7 @@ mod cbor {
         let mut w = FramedCborWriter::new(Vec::new());
         w.send(&"a string longer than the limit").unwrap();
         let mut r = FramedCborReader::with_inner(FramedReader::with_max(Cursor::new(w.into_inner()), 2));
-        assert!(matches!(r.recv::<String>().unwrap_err().code, AbutCode::FrameTooLarge));
+        assert!(matches!(r.recv::<String>().unwrap_err().code, AbutCode::FrameTooLarge { .. }));
         assert_eq!(r.inner_mut().max_frame_len(), 2);
     }
 }
@@ -120,6 +120,6 @@ mod postcard {
         let mut w = FramedPostcardWriter::new(Vec::new());
         w.send(&"a string longer than the limit").unwrap();
         let mut r = FramedPostcardReader::with_inner(FramedReader::with_max(Cursor::new(w.into_inner()), 2));
-        assert!(matches!(r.recv::<String>().unwrap_err().code, AbutCode::FrameTooLarge));
+        assert!(matches!(r.recv::<String>().unwrap_err().code, AbutCode::FrameTooLarge { .. }));
     }
 }

@@ -25,8 +25,13 @@ pub enum AbutCode {
 
     /// A frame's declared length exceeds the reader's maximum, or a frame to
     /// write is longer than a `u32` can describe.
-    #[liaise(code = 3, msg = "Frame too large")]
-    FrameTooLarge,
+    #[liaise(code = 3, msg = "Frame too large: len {len} exceeds max {max}")]
+    FrameTooLarge {
+        /// The frame's length.
+        len: usize,
+        /// The most that was allowed.
+        max: usize,
+    },
 
     /// `postcard` could not encode the value; the codec error is the source.
     #[cfg(feature = "postcard")]
@@ -62,13 +67,24 @@ pub enum AbutSource {
     Cbor(serde_cbor::Error),
 }
 
-/// The crate's error: a code, optional context, and the underlying source.
+impl AbutSource {
+    fn as_error(&self) -> &(dyn std::error::Error + 'static) {
+        match self {
+            Self::Io(e) => e,
+            #[cfg(feature = "postcard")]
+            Self::Postcard(e) => e,
+            #[cfg(feature = "cbor")]
+            Self::Cbor(e) => e,
+        }
+    }
+}
+
+/// The crate's error: a code, which carries whatever numbers describe the
+/// occurrence, and the underlying I/O or codec error when there is one.
 #[derive(Debug)]
 pub struct AbutError {
     /// The stable code.
     pub code: AbutCode,
-    /// Free text about this occurrence, such as the lengths involved.
-    pub ctx: Option<String>,
     /// The underlying error, if any.
     pub source: Option<AbutSource>,
 }
@@ -77,20 +93,13 @@ impl AbutError {
     /// An error with only a code.
     #[inline]
     pub fn new(code: AbutCode) -> Self {
-        Self { code, ctx: None, source: None }
-    }
-
-    /// The same error with context text attached.
-    #[inline]
-    pub fn ctx(mut self, ctx: impl fmt::Display) -> Self {
-        self.ctx = Some(ctx.to_string());
-        self
+        Self { code, source: None }
     }
 
     /// An I/O failure, keeping the I/O error as the source.
     #[inline]
     pub fn io(err: io::Error) -> Self {
-        Self { code: AbutCode::Io, ctx: Some(err.to_string()), source: Some(AbutSource::Io(err)) }
+        Self { code: AbutCode::Io, source: Some(AbutSource::Io(err)) }
     }
 
     /// The caller's buffer cannot hold a frame of `needed` bytes.
@@ -102,44 +111,45 @@ impl AbutError {
     /// A frame of `len` bytes where at most `max` are allowed.
     #[inline]
     pub fn frame_too_large(len: usize, max: usize) -> Self {
-        Self::new(AbutCode::FrameTooLarge).ctx(format_args!("len {len} exceeds max {max}"))
+        Self::new(AbutCode::FrameTooLarge { len, max })
     }
 
     /// A postcard encode failure, keeping the codec error as the source.
     #[cfg(feature = "postcard")]
     #[inline]
     pub fn postcard_encode(err: postcard::Error) -> Self {
-        Self { code: AbutCode::PostcardEncode, ctx: Some(err.to_string()), source: Some(AbutSource::Postcard(err)) }
+        Self { code: AbutCode::PostcardEncode, source: Some(AbutSource::Postcard(err)) }
     }
 
     /// A postcard decode failure, keeping the codec error as the source.
     #[cfg(feature = "postcard")]
     #[inline]
     pub fn postcard_decode(err: postcard::Error) -> Self {
-        Self { code: AbutCode::PostcardDecode, ctx: Some(err.to_string()), source: Some(AbutSource::Postcard(err)) }
+        Self { code: AbutCode::PostcardDecode, source: Some(AbutSource::Postcard(err)) }
     }
 
     /// A CBOR encode failure, keeping the codec error as the source.
     #[cfg(feature = "cbor")]
     #[inline]
     pub fn cbor_encode(err: serde_cbor::Error) -> Self {
-        Self { code: AbutCode::CborEncode, ctx: Some(err.to_string()), source: Some(AbutSource::Cbor(err)) }
+        Self { code: AbutCode::CborEncode, source: Some(AbutSource::Cbor(err)) }
     }
 
     /// A CBOR decode failure, keeping the codec error as the source.
     #[cfg(feature = "cbor")]
     #[inline]
     pub fn cbor_decode(err: serde_cbor::Error) -> Self {
-        Self { code: AbutCode::CborDecode, ctx: Some(err.to_string()), source: Some(AbutSource::Cbor(err)) }
+        Self { code: AbutCode::CborDecode, source: Some(AbutSource::Cbor(err)) }
     }
 }
 
 impl fmt::Display for AbutError {
-    /// `[ABUT0003] Frame too large: len 100 exceeds max 50`
+    /// `[ABUT0003] Frame too large: len 100 exceeds max 50`, or with a source,
+    /// `[ABUT0001] I/O failure: broken pipe`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let base = self.code.render();
-        match &self.ctx {
-            Some(ctx) => write!(f, "{base}: {ctx}"),
+        match &self.source {
+            Some(source) => write!(f, "{base}: {}", source.as_error()),
             None => write!(f, "{base}"),
         }
     }
@@ -147,14 +157,7 @@ impl fmt::Display for AbutError {
 
 impl std::error::Error for AbutError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.source {
-            Some(AbutSource::Io(e)) => Some(e),
-            #[cfg(feature = "postcard")]
-            Some(AbutSource::Postcard(e)) => Some(e),
-            #[cfg(feature = "cbor")]
-            Some(AbutSource::Cbor(e)) => Some(e),
-            None => None,
-        }
+        self.source.as_ref().map(AbutSource::as_error)
     }
 }
 
