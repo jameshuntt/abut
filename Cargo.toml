@@ -1,26 +1,37 @@
 [package]
 name = "abut"
-version = "0.1.3"
-edition = "2024"
-
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.70"
 license = "MIT OR Apache-2.0"
-description = "Structural IPC orchestration and boundary-aware Unix Domain Sockets. Manages the secure adjacency of isolated processes within the Honest-Classified security suite."
-
-authors = ["James Hunt <jameshuntdevelopment@gmail.com>"]
+description = "Length-prefixed frames over any Read/Write (Unix sockets, pipes, TCP): a reader that stays in sync after errors, typed CBOR and postcard frames, and a bounded no-allocation ring for handing frames between threads."
+authors = ["James Hunt <james@1o.business>"]
 repository = "https://github.com/jameshuntt/abut"
+readme = "README.md"
+keywords = ["framing", "ipc", "unix-socket", "cbor", "postcard"]
+categories = ["network-programming", "encoding"]
+include = ["src/**", "tests/**", "examples/**", "Cargo.toml", "README.md", "LICENSE-*"]
 
 [features]
-default = ["cbor", "postcard", "ring-heapless"]
-
-postcard = ["dep:postcard"]
+default = ["cbor", "postcard"]
+# Typed frames encoded with CBOR (`frame::cbor`).
 cbor = ["dep:serde_cbor"]
+# Typed frames encoded with postcard (`frame::postcard`).
+postcard = ["dep:postcard"]
+# The bounded, allocation-free frame ring (`ring`).
 ring-heapless = ["dep:heapless"]
+
 [dependencies]
-liaise = { version = "0.1.5", features = ["std"] }
-
-
-
-serde_cbor = { version = "0.11.2", optional = true }
-postcard = { version = "1", default-features = false, features = ["alloc"], optional = true  }
-serde = { version = "1.0.219", features = ["derive"] }
+liaise = { version = "0.1.6", features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_cbor = { version = "0.11", optional = true }
+postcard = { version = "1", default-features = false, features = ["alloc"], optional = true }
 heapless = { version = "0.8", default-features = false, optional = true }
+
+[[example]]
+name = "ring"
+required-features = ["ring-heapless"]
+
+[[example]]
+name = "unix_socket"
+required-features = ["cbor"]

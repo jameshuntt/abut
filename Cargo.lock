@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "abut"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "heapless",
  "liaise",
@@ -89,18 +89,18 @@ dependencies = [
 
 [[package]]
 name = "liaise"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "874886bea2373f7ff3d7df6404d3f0d3d497cbc1a3075eb574e2297efbb9c5e7"
+checksum = "fee3c7898a72ddc00992daec928e54f014e660b5834f74ece196631b69919ab6"
 dependencies = [
  "liaise_derive",
 ]
 
 [[package]]
 name = "liaise_derive"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ccf39869d3921bb6ec519e2301b1e9df8f41e7469bc19cf9e2c99f9b8cdaf24"
+checksum = "fbdf212b98d685df541f968c265865e12f7cbcd50c975779d7d668ad4ada9f72"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
