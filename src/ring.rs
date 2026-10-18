@@ -13,7 +13,7 @@
 
 use heapless::spsc::{Consumer, Producer, Queue};
 use heapless::Vec;
-use liaise::{Liaise, LiaiseCodes};
+use liaise::LiaiseCodes;
 
 use crate::traits::FrameSink;
 

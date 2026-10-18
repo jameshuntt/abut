@@ -1,6 +1,6 @@
 [package]
 name = "abut"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 rust-version = "1.70"
 license = "MIT OR Apache-2.0"
@@ -22,7 +22,7 @@ postcard = ["dep:postcard"]
 ring-heapless = ["dep:heapless"]
 
 [dependencies]
-liaise = { version = "0.1.6", features = ["std"] }
+liaise = { version = "0.2.4", features = ["std"] }
 serde = { version = "1", features = ["derive"] }
 serde_cbor = { version = "0.11", optional = true }
 postcard = { version = "1", default-features = false, features = ["alloc"], optional = true }
