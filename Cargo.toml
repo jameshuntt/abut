@@ -2,7 +2,7 @@
 name = "abut"
 version = "0.2.2"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 description = "Length-prefixed frames over any Read/Write (Unix sockets, pipes, TCP): a reader that stays in sync after errors, typed CBOR and postcard frames, and a bounded no-allocation ring for handing frames between threads."
 authors = ["James Hunt <james@1o.business>"]
